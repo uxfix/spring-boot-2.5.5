@@ -1,0 +1,4 @@
+org.springframework.boot.BootstrapRegistryInitializer = com.demo1.extend.MyBootstrapRegistryInitializer
+org.springframework.boot.Bootstrapper =com.demo1.extend.MyBootstrapper
+org.springframework.context.ApplicationContextInitializer =com.demo1.extend.MyApplicationContextInitializer
+org.springframework.context.ApplicationListener =com.demo1.extend.MyApplicationListener

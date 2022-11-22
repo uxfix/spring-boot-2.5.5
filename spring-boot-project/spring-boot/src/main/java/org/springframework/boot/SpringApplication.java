@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -202,6 +203,9 @@ public class SpringApplication {
 
 	static final SpringApplicationShutdownHook shutdownHook = new SpringApplicationShutdownHook();
 
+	/**
+	 * 存放配置类,比方说我们的 SpringBoot 启动类
+	 */
 	private Set<Class<?>> primarySources;
 
 	private Set<String> sources = new LinkedHashSet<>();
@@ -280,20 +284,29 @@ public class SpringApplication {
 	public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {
 		this.resourceLoader = resourceLoader;
 		Assert.notNull(primarySources, "PrimarySources must not be null");
+		// 保存配置类, SpringBoot的启动配置类在这里保存
 		this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+		// 推断当前应用类型,就是通过判断某些是否存在classPath路径来决定是一个什么应用类型
 		this.webApplicationType = WebApplicationType.deduceFromClasspath();
+		// 从 META-INF/spring.factories 获取 Bootstrapper BootstrapRegistryInitializer 类型对象
 		this.bootstrapRegistryInitializers = getBootstrapRegistryInitializersFromSpringFactories();
+		// 从 META-INF/spring.factories 获取 ApplicationContextInitializer 对象
 		setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+		// 从 META-INF/spring.factories 获取 ApplicationListener 对象
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+		// 推测出Main类（main()方法所在的类）
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
 
 	@SuppressWarnings("deprecation")
 	private List<BootstrapRegistryInitializer> getBootstrapRegistryInitializersFromSpringFactories() {
 		ArrayList<BootstrapRegistryInitializer> initializers = new ArrayList<>();
+		// META-INF/spring.factories 文件拿到 key Bootstrapper.class 类型的对象
+		// 并将其包装转换成为 BootstrapRegistryInitializer 类型添加到 initializers 集合
 		getSpringFactoriesInstances(Bootstrapper.class).stream()
 				.map((bootstrapper) -> ((BootstrapRegistryInitializer) bootstrapper::initialize))
 				.forEach(initializers::add);
+		// META-INF/spring.factories 文件拿到 key BootstrapRegistryInitializer.class 类型的对象
 		initializers.addAll(getSpringFactoriesInstances(BootstrapRegistryInitializer.class));
 		return initializers;
 	}
@@ -453,8 +466,11 @@ public class SpringApplication {
 	private <T> Collection<T> getSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes, Object... args) {
 		ClassLoader classLoader = getClassLoader();
 		// Use names and ensure unique to protect against duplicates
+		// META-INF/spring.factories 找到key为参数type,对应的value值
 		Set<String> names = new LinkedHashSet<>(SpringFactoriesLoader.loadFactoryNames(type, classLoader));
+		// 通过找到的value值实例化出对象
 		List<T> instances = createSpringFactoriesInstances(type, parameterTypes, classLoader, args, names);
+		// 排序
 		AnnotationAwareOrderComparator.sort(instances);
 		return instances;
 	}
